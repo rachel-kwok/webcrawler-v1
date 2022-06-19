@@ -38,3 +38,4 @@ if page.status_code == 200:
 else:
     print("Error! Page not found")
     exit()
+    
