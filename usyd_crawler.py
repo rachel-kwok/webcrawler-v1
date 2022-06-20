@@ -2,6 +2,7 @@ import logging
 from zipfile import Path
 import requests
 from bs4 import BeautifulSoup
+import pandas as pd
 
 # Basic config for logs
 logging.basicConfig(
@@ -23,7 +24,8 @@ class usyd_crawler:
         self.uos_S1CIJN = []    # Intrensive Jun UOS
         self.uos_S2CIJL = []    # Intensive Jul UOS
         self.uos_S2CINO = []    # Intensive Nov UOS
-        self.uos_S2CIDE = []    # Intensive Dec UOS 
+        self.uos_S2CIDE = []    # Intensive Dec UOS
+        self.all_uos = [] 
         self.urls_to_visit = urls
     
     def clean_url(self, url):
@@ -45,6 +47,7 @@ class usyd_crawler:
             # Obtaining unit name
             if len(cell.split('|br|')[0]) == 8:
                 unit_name = cell.split('|br|')[0]
+                self.add_unit(unit_name, self.all_uos)
             
             else:
                 # Adding unit into relevant sessions
@@ -110,7 +113,26 @@ class usyd_crawler:
         print(str(len(self.uos_S2CIJL)) + " Intensive Jul units")
         print(str(len(self.uos_S2CINO)) + " Intensive Nov units")
         print(str(len(self.uos_S2CIDE)) + " Intensive Dec units")
-            
+    
+    def download(self):
+        df_to_csv = [
+            sorted(crawl.uos_sem_1), sorted(crawl.uos_sem_2), 
+            sorted(crawl.uos_S1CIJA), sorted(crawl.uos_S1CIFE), 
+            sorted(crawl.uos_S1CIJN), sorted(crawl.uos_S2CIJL),
+            sorted(crawl.uos_S2CINO), sorted(crawl.uos_S2CIDE)
+        ]
+
+        # Creating dataframe
+        df = pd.DataFrame(df_to_csv, index=['sem_1', 'sem_2', 
+                                            'int_jan', 'int_feb', 
+                                            'int_jun', 'int_jul', 
+                                            'int_no', 'int_dec'])
+        
+        # Transposing and saving as a CSV
+        df = df.T
+        df.to_csv('uos.csv', sep=';')
+
 if __name__ == '__main__':
     crawl = usyd_crawler(urls=['https://www.sydney.edu.au/handbooks/science/subject_areas_ae/tableA_overview.shtml'])
     crawl.run()
+    crawl.download()
